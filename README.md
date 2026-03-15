@@ -113,4 +113,4 @@ Reflection Quality | Question depth & coherence
 > 세상을 아는 AI가 아니라 **나를 잊지 않게 하는 AI**입니다.
 
 ## 📜 라이선스
-MIT License
+[Apache-2.0 license](./LICENSE)
