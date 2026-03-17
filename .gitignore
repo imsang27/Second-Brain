@@ -1,0 +1,36 @@
+# === Python 관련 ===
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# === 데이터 및 보안 (가장 중요) ===
+# 개인 데이터 및 관심사 데이터셋은 절대 공유되지 않도록 제외합니다
+data/personal/
+data/interest/
+
+# 환경 변수 및 설정 파일 (API 키 등 포함 방지)
+.env
+.flaskenv
+
+# === 데이터베이스 및 임베딩 ===
+# 로컬 벡터 저장소인 ChromaDB 및 FAISS 인덱스 파일을 제외합니다
+chroma_db/
+faiss_index/
+*.db
+*.sqlite3
+
+# === 운영체제 및 도구 ===
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# === 로그 및 임시 파일 ===
+logs/
+*.log
+tmp/
