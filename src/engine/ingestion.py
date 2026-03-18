@@ -40,7 +40,10 @@ def run_ingestion():
     )
     
     print("✨ 개인 지식 베이스(Vector DB) 구축이 완료되었습니다!")
-    print(f"💾 저장된 데이터 조각(Chunks) 총합: {len(vector_db.get()['ids'])}개")
+
+    # ._collection.count()를 사용하면 데이터를 불러오지 않고 숫자만 빠르게 가져옴
+    chunk_count = vector_db._collection.count()
+    print(f"💾 저장된 데이터 조각(Chunks) 총합: {chunk_count}개")
 
 if __name__ == "__main__":
     run_ingestion()
