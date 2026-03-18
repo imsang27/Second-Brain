@@ -21,6 +21,12 @@
 🔍 근거 기반 응답 | 문서 기반 근거 인용 (Hallucination 억제)
 🔐 Privacy | 개인 데이터 독립 저장 및 보호
 
+## 현재 구현 완료
+- **Personal RAG**: `#태그` 및 날짜 메타데이터를 포함한 개인 메모 기반 지식 회상
+- **Semantic Search**: `bge-m3` 모델과 `ChromaDB`를 이용한 고성능 로컬 검색
+- **Smart Query**: 태그 연관성을 이해하고 출처를 명확히 밝히는 답변 생성
+- **Centralized Config**: `config.py`를 통한 시스템 설정 및 보안(Privacy) 관리
+
 ## 🧠 왜 필요한가?
 
 - 우리는 **기록은 쌓지만 활용되지 않는다**
@@ -50,6 +56,68 @@ flowchart TD
 - **Reasoning Specialist**: DeepSeek-R1 (통찰 질문 및 논리 분석)
 - **Routing Specialist**: Phi-3 Mini (질문 분류 및 분기 처리)
 - **Backup Engine**: Qwen 2.5 7B (시스템 안정성 보조)
+- **Embedding**: BAAI/bge-m3 (Local GPU 가속)
+- **Vector DB**: Chroma (Local Persistence)
+
+## ⚙️ 실행 방법 (Update)
+1. 프로젝트 복제 (Clone)
+터미널(또는 CMD)을 열고 프로젝트를 다운로드할 폴더로 이동한 뒤 아래를 입력하세요.
+```
+git clone https://github.com/imsang27/second-brain.git
+cd second-brain
+```
+
+2. 가상환경 생성 및 활성화
+프로젝트별로 독립된 패키지 환경을 유지하기 위해 권장되는 단계입니다.
+```
+python -m venv venv
+```
+
+가상환경 활성화 (Windows)
+```
+.\venv\Scripts\activate
+```
+가상환경 활성화 (Mac/Linux)
+```
+source venv/bin/activate
+```
+
+3. 필수 라이브러리 설치
+RTX 4070 및 PyTorch 관련 최적화 라이브러리를 포함한 패키지를 설치합니다.
+```
+pip install -r requirements.txt
+```
+
+4. Ollama 설치 및 모델 다운로드
+LLM 엔진인 Ollama가 설치되어 있지 않다면 https://ollama.com 에서 먼저 설치하세요.
+설치 후, 터미널에서 아래 명령어로 메인 모델과 임베딩 모델 준비를 돕는 모델을 다운로드합니다.
+```
+ollama pull qwen3.5:9b
+```
+
+5. 환경 변수 설정 (.env)
+샘플 파일을 복사하여 실제 설정 파일을 만듭니다.
+이후 메모장으로 .env 파일을 열어 NOTES_PATH(내 메모 폴더 경로)를 수정하세요.
+Windows
+```
+copy .env.sample .env
+```
+Mac/Linux
+```
+cp .env.sample .env
+```
+
+# 6. 지식 베이스 구축 (Ingestion)
+내 메모들을 읽어와서 벡터 데이터베이스(ChromaDB)를 생성합니다.
+```
+python -m src.engine.ingestion
+```
+
+# 7. Second Brain 실행 (Query)
+이제 구축된 지식을 바탕으로 AI와 대화를 시작합니다.
+```
+python -m src.engine.query
+```
 
 ## 📂 데이터 예시
 
