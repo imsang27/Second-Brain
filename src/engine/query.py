@@ -73,10 +73,12 @@ def ask_second_brain():
     llm = OllamaLLM(model=OLLAMA_MODEL)
     
     # 4. 프롬프트 디자인: AI에게 페르소나 부여, RAG 시스템 조립 (질문 -> DB 검색 -> 답변)
-    template = """당신은 ㅇㅅㅇ님의 '두 번째 두뇌'입니다. 
-    제공된 메모 내용을 바탕으로 친절하게 답변하세요. 메모에 없는 내용은 모른다고 솔직히 답하세요.
+    template = """당신은 ㅇㅅㅇ님의 '두 번째 두뇌'입니다.
+    제공된 메모 내용과 해당 메모의 #태그 정보를 참고하여 친절하게 답변하세요.
+    태그가 겹치는 메모들은 서로 강한 연관성이 있음을 인지하세요.
+    메모에 없는 내용은 모른다고 솔직히 답하세요.
     
-    # 참고할 메모 내용:
+    # 참고할 메모 내용 (태그 포함):
     {source_documents}
     
     # 질문:
@@ -121,7 +123,8 @@ def ask_second_brain():
             for i, doc in enumerate(result['source_documents']):
                 title = doc.metadata.get('title', '제목 없음')
                 date = doc.metadata.get('date', '날짜 미상')
-                print(f"   {i+1}. {title} ({date})")
+                tags = doc.metadata.get('tags', '태그 없음')
+                print(f"   {i+1}. {title} ({date}) [태그: {tags}]")
 
         except Exception as e:
             stop_event.set()
