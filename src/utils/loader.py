@@ -5,7 +5,7 @@ from langchain_core.documents import Document
 
 def load_personal_notes(directory_path):
     """
-    마크다운 파일을 읽어 제목, 내용, 날짜를 추출합니다.
+    하위 폴더를 포함하여 모든 마크다운 파일을 찾아 제목, 내용, 날짜를 추출합니다.
     """
     notes = []
     # 마크다운 태그를 찾는 정규표현식 (예: #python, #보안)
@@ -16,29 +16,34 @@ def load_personal_notes(directory_path):
         os.makedirs(directory_path)
         return notes
 
-    for filename in os.listdir(directory_path):
-        if filename.endswith(".md"):
-            file_path = os.path.join(directory_path, filename)
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-                # 1. 태그 추출
-                tags = list(set(tag_pattern.findall(content)))
-                # 파일 수정 시간을 날짜 메타데이터로 활용합니다.
-                mtime = os.path.getmtime(file_path)
-                date_str = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d')
-                
-                # 2. LangChain 문서 객체 생성
-                document = Document(
-                    page_content=content,
-                    metadata={
-                        "source": file_path,
-                        "title": filename,
-                        "date": date_str,
-                        "tags": ", ".join(tags) # 리스트를 문자열로 변환하여 저장
-                    }
-                )
-                notes.append(document)
+    # os.listdir 대신 os.walk를 사용하여 모든 하위 폴더를 탐색합니다.
+    for root, dirs, files in os.walk(directory_path):
+        for filename in os.listdir(directory_path):
+            if filename.endswith(".md"):
+                file_path = os.path.join(directory_path, filename)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        
+                        # 1. 태그 추출
+                        tags = list(set(tag_pattern.findall(content)))
+                        # 파일 수정 시간을 날짜 메타데이터로 활용합니다.
+                        mtime = os.path.getmtime(file_path)
+                        date_str = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d')
+                        
+                        # 2. LangChain 문서 객체 생성
+                        document = Document(
+                            page_content=content,
+                            metadata={
+                                "source": file_path,
+                                "title": filename,
+                                "date": date_str,
+                                "tags": ", ".join(tags) # 리스트를 문자열로 변환하여 저장
+                            }
+                        )
+                        notes.append(document)
+                except Exception as e:
+                            print(f"⚠️ 파일을 읽는 중 오류 발생 ({filename}): {e}")
     return notes
 
 if __name__ == "__main__":

@@ -40,7 +40,7 @@ def run_ingestion():
     )
     
     print("✨ 개인 지식 베이스(Vector DB) 구축이 완료되었습니다!")
-    print(f"💾 저장된 데이터 개수: {len(vector_db.get())}개")
+    print(f"💾 저장된 데이터 조각(Chunks) 총합: {len(vector_db.get()['ids'])}개")
 
 if __name__ == "__main__":
     run_ingestion()
