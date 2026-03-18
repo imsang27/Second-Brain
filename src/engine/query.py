@@ -1,9 +1,8 @@
 import os
-import warnings
 import sys
 import time
 import threading
-from dotenv import load_dotenv
+from src.config import DEVICE, EMBEDDING_MODEL, OLLAMA_MODEL, DB_PATH, RETRIEVAL_K
 
 # ========================================================================
 # [중요] IMPORT 순서 가이드 (수정 시 주의)
@@ -12,26 +11,6 @@ from dotenv import load_dotenv
 # 2. 경고 제어: 라이브러리 임포트 시 발생하는 DeprecationWarning 등을 
 #    사전에 차단하기 위해 warnings 설정을 먼저 수행합니다.
 # ========================================================================
-
-# 환경 변수 로드
-load_dotenv()
-
-# 환경 변수에서 값 가져오기 (없을 경우를 대비한 기본값 설정)
-HF_TOKEN = os.getenv("HF_TOKEN")
-DEVICE = os.getenv("DEVICE", "cuda")
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
-DB_PATH = os.getenv("DB_PATH", "./chroma_db")
-RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", 3))
-
-# 시스템 환경 변수 설정 (토크나이저 데드락 방지 등)
-os.environ["TOKENIZERS_PARALLELISM"] = os.getenv("TOKENIZERS_PARALLELISM", "false")
-os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN", "")
-os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = os.getenv("HF_HUB_DISABLE_PROGRESS_BARS", "1")
-
-# 경고 메시지 무시 설정 (Chroma 관련 경고 등)
-warnings.filterwarnings("ignore", category=UserWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # 무거운 AI 라이브러리는 모든 설정이 끝난 뒤 로드
 from langchain_chroma import Chroma

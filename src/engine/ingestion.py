@@ -1,17 +1,8 @@
-import os
-from dotenv import load_dotenv
+from src.config import NOTES_PATH, DB_PATH, EMBEDDING_MODEL, DEVICE
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.utils.loader import load_personal_notes
-
-load_dotenv() # 환경 변수 로드
-
-# 환경 변수에서 실제 메모 경로 가져오기
-NOTES_PATH = os.getenv("NOTES_PATH")
-DB_PATH = os.getenv("DB_PATH", "./chroma_db")
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
-DEVICE = os.getenv("DEVICE", "cuda")
 
 def run_ingestion():
     # 1. 데이터 로드: loader.py를 통해 해당 경로의 모든 마크다운을 읽어옴
