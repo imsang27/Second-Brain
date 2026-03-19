@@ -21,5 +21,25 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
 DEVICE = os.getenv("DEVICE", "cuda")
 RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", 3))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 500))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 50))
+
+# 5. 상태/출력 메시지 설정
+EMBEDDING_DEVICE_STATUS = {
+    "cuda": "CUDA 가속 사용",
+    "mps": "Apple Silicon(MPS) 가속 사용",
+    "cpu": "CPU 사용",
+}
+
+INGESTION_STATUS_MESSAGES = {
+    "load_notes": "📂 {notes_path}에서 개인 메모 읽는 중...",
+    "no_notes": "❌ 불러올 메모가 없습니다.\n{notes_path} 폴더를 확인해주세요.",
+    "embedding": "🧠 텍스트를 숫자로 변환(Embedding) 중... ({device_status})",
+    "load_existing_db": "🔄 기존 Vector DB를 로드하여 새로운 데이터 {chunk_count}개를 추가합니다...",
+    "create_new_db": "💾 새로운 Vector DB를 생성하여 {chunk_count}개의 조각을 저장합니다...",
+    "build_complete": "✨ 개인 지식 베이스(Vector DB) 구축이 완료되었습니다!",
+    "saved_chunk_total": "💾 저장된 데이터 조각(Chunks) 총합: {chunk_count}개",
+    "ingestion_complete": "✅ 데이터 인제스션 완료!",
+}
 
 print(f"⚙️ 설정 로드 완료: {DEVICE} 장치 사용 중")
