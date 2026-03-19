@@ -97,7 +97,7 @@ ollama pull qwen3.5:9b
 
 5. 환경 변수 설정 (.env)
 샘플 파일을 복사하여 실제 설정 파일을 만듭니다.
-이후 메모장으로 .env 파일을 열어 NOTES_PATH(내 메모 폴더 경로)를 수정하세요.
+이후 메모장으로 .env 파일을 열어 NOTES_PATH(내 메모 폴더 경로)를 수정하세요.  
 Windows
 ```
 copy .env.sample .env
@@ -107,13 +107,13 @@ Mac/Linux
 cp .env.sample .env
 ```
 
-# 6. 지식 베이스 구축 (Ingestion)
+6. 지식 베이스 구축 (Ingestion)
 내 메모들을 읽어와서 벡터 데이터베이스(ChromaDB)를 생성합니다.
 ```
 python -m src.engine.ingestion
 ```
 
-# 7. Second Brain 실행 (Query)
+7. Second Brain 실행 (Query)
 이제 구축된 지식을 바탕으로 AI와 대화를 시작합니다.
 ```
 python -m src.engine.query
