@@ -7,6 +7,7 @@ from src.config import (
     EMBEDDING_MODEL,
     OLLAMA_MODEL,
     DB_PATH,
+    RAG_PROMPT_TEMPLATE,
     RETRIEVAL_K,
     STATUS_MESSAGES,
     USER_NAME,
@@ -49,19 +50,7 @@ def ask_second_brain():
     llm = OllamaLLM(model=OLLAMA_MODEL)
     
     # 4. 프롬프트 디자인: AI에게 페르소나 부여, RAG 시스템 조립 (질문 -> DB 검색 -> 답변)
-    template = """당신은 {user_name}님의 '두 번째 두뇌'예요.
-    제공된 메모 내용과 해당 메모의 #태그 정보를 참고해서 친절하게 답변해주세요.
-    태그가 겹치는 메모들은 서로 강한 연관성이 있음을 인지해주세요.
-    메모에 없는 내용은 모른다고 솔직히 답해주세요.
-    
-    # 참고할 메모 내용 (태그 포함):
-    {source_documents}
-    
-    # 질문:
-    {question}
-    
-    답변:"""
-    prompt = ChatPromptTemplate.from_template(template).partial(user_name=USER_NAME)
+    prompt = ChatPromptTemplate.from_template(RAG_PROMPT_TEMPLATE).partial(user_name=USER_NAME)
     
     # 5. RAG 체인 생성 (답변과 출처를 동시에 반환하도록 병렬화)
     chain = RunnableParallel({

@@ -28,6 +28,20 @@ DATE_FORMAT = "%Y-%m-%d"
 
 # 4. RAG 상세 파라미터
 RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", 3))
+
+# RAG 질의용 시스템 프롬프트 (ChatPromptTemplate: user_name, source_documents, question)
+RAG_PROMPT_TEMPLATE = """당신은 {user_name}님의 '두 번째 두뇌'예요.
+    제공된 메모 내용과 해당 메모의 #태그 정보를 참고해서 친절하게 답변해주세요.
+    태그가 겹치는 메모들은 서로 강한 연관성이 있음을 인지해주세요.
+    메모에 없는 내용은 모른다고 솔직히 답해주세요.
+    
+    # 참고할 메모 내용 (태그 포함):
+    {source_documents}
+    
+    # 질문:
+    {question}
+    
+    답변:"""
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 500))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 50))
 
