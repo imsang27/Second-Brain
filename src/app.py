@@ -49,7 +49,13 @@ def chat_with_brain(message, history):
         return "", history
 
 # 3. Gradio 인터페이스 구성
-with gr.Blocks(title=f"{USER_NAME}의 두 번째 두뇌", theme=gr.themes.Soft()) as demo:
+custom_css = """
+#chatbot { background-color: #1e1e1e; border-radius: 15px; }
+.gradio-container { font-family: 'Pretendard', sans-serif; }
+button.primary { background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); border: none; }
+"""
+
+with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
     gr.Markdown(f"# 🧠 {USER_NAME}님의 'Second Brain'")
     
     with gr.Tabs():
