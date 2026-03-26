@@ -6,3 +6,4 @@ sentence-transformers
 python-dotenv
 pypdf
 youtube-transcript-api
+gradio
