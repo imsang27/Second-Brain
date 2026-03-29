@@ -28,6 +28,8 @@ DATE_FORMAT = "%Y-%m-%d"
 
 # 4. RAG 상세 파라미터
 RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", 3))
+SEARCH_TYPE = os.getenv("SEARCH_TYPE", "mmr")
+FETCH_K = int(os.getenv("FETCH_K", 20))
 
 # RAG 질의용 시스템 프롬프트 (ChatPromptTemplate: user_name, source_documents, question)
 RAG_PROMPT_TEMPLATE = """당신은 {user_name}님의 '두 번째 두뇌'예요.
@@ -59,7 +61,7 @@ STATUS_MESSAGES = {
     
     # --- [중복 체크 & 필터링] ---
     "checking_sync": "🔎 이미 알고 있는 내용인지 제 기억이랑 꼼꼼하게 맞춰보는 중이에요{dots}",
-    "all_synced": "💯 휴, 이미 다 알고 있는 내용들이네요! 지금 상태로도 충분히 똑똑해요.",
+    "all_synced": "💯 휴, 이미 다 알고 있는 내용들이네요! 지금 상태로도 충분히 똑똑해요!",
     "db_not_found": "⚠️ 음.. 아직 {user_name}님을 잘 모르겠어요. 어떤 일들이 있었는지 알려주세요!",
     
     # --- [임베딩 & 분할 & 저장] ---
@@ -77,6 +79,7 @@ STATUS_MESSAGES = {
     "user_prompt": "\n👤 어떤 게 궁금하세요?: ",
     "bot_answer": "\n🤖 제가 생각한 대답이에요:\n{answer}",
     "source_header": "\n📍 아래 기록들을 참고해서 대답했어요!\n",
+    "no_source_found": "\n\n📍 참고할 수 있는 메모가 지식 베이스에 없습니다.",
     "source_item": "   - {idx}. {title} ({date})\n\t#태그: {tags}",
     "error_occurred": "❌ 으악, 적어둔 종이를 잃었어요.. 다시 물어봐 주실래요?\n에러: {e}"
 }

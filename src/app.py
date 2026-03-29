@@ -18,10 +18,16 @@ def start_learning():
 
 # 2. 질문 답변 실행 함수 (Query)
 def chat_with_brain(message, history):
+    # 메시지가 비어있는 경우 방어
+    if not message.strip():
+        return "", history
+    
     # DB 존재 여부 체크
     if not os.path.exists(DB_PATH):
         response = STATUS_MESSAGES["db_not_found"].format(user_name=USER_NAME)
-        history.append((message, response))
+        # Gradio 6.x 형식으로 추가
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": response})
         return "", history
 
     try:
@@ -31,21 +37,49 @@ def chat_with_brain(message, history):
         
         # 참고 기록(Source Header) 및 목록 구성
         source_text = STATUS_MESSAGES["source_header"]
-        for i, doc in enumerate(source_docs):
+        seen_sources = set() # 이미 표시한 파일명을 저장
+        idx = 1
+
+        for doc in source_docs:
+            title = doc.metadata.get('title', '제목 없음')
+            # 동일 파일 중복 표시 방지
+            if title in seen_sources:
+                continue
+            
+            date = doc.metadata.get('date', '날짜 미상')
+            tags = doc.metadata.get('tags', '없음')
+            
             source_text += STATUS_MESSAGES["source_item"].format(
-                idx=i+1,
-                title=doc.metadata.get('title', '제목 없음'),
-                date=doc.metadata.get('date', '날짜 미상'),
-                tags=doc.metadata.get('tags', '태그 없음')
+                idx=idx,
+                title=title,
+                date=date,
+                tags=tags
             )
+            seen_sources.add(title)
+            idx += 1
+
+        # for i, doc in enumerate(source_docs):
+        #     source_text += STATUS_MESSAGES["source_item"].format(
+        #         idx=i+1,
+        #         title=doc.metadata.get('title', '제목 없음'),
+        #         date=doc.metadata.get('date', '날짜 미상'),
+        #         tags=doc.metadata.get('tags', '태그 없음')
+        #     )
         
+        # 출처가 하나도 없을 경우 메시지 처리
+        if not seen_sources:
+            source_text = STATUS_MESSAGES["no_source_found"]
+
         full_response = f"{answer}\n\n{source_text}"
-        history.append((message, full_response))
+        # 튜플 대신 딕셔너리 리스트 형식으로 저장합니다.
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": full_response})
         return "", history
         
     except Exception as e:
         error_msg = STATUS_MESSAGES["error_occurred"].format(e=e)
-        history.append((message, error_msg))
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": error_msg})
         return "", history
 
 # 3. Gradio 인터페이스 구성

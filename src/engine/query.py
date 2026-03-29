@@ -1,7 +1,4 @@
 import os
-import sys
-import time
-import threading
 from src.config import (
     DEVICE,
     EMBEDDING_MODEL,
@@ -9,6 +6,8 @@ from src.config import (
     DB_PATH,
     RAG_PROMPT_TEMPLATE,
     RETRIEVAL_K,
+    SEARCH_TYPE,
+    FETCH_K,
     STATUS_MESSAGES,
     USER_NAME,
 )
@@ -30,22 +29,30 @@ from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 from langchain_core.output_parsers import StrOutputParser
 from src.utils.ui_utils import start_animation
 
-def ask_second_brain():
-    # 1. 임베딩 모델 설정
-    embeddings = HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={'device': DEVICE} # GPU 가속 유지
-    )
+# 1. 임베딩 모델 설정
+embeddings = HuggingFaceEmbeddings(
+    model_name=EMBEDDING_MODEL,
+    model_kwargs={'device': DEVICE} # GPU 가속 유지
+)
+
+def ask_second_brain(web_input=None): # web_input 인자 추가
     
     # 2. Vector DB 로드
     if not os.path.exists(DB_PATH):
-        print(STATUS_MESSAGES["db_not_found"].format(path=DB_PATH))
+        error_msg = STATUS_MESSAGES["db_not_found"].format(path=DB_PATH)
+        if web_input is not None: return error_msg, [] # 웹 응답용
+        print(error_msg) # 터미널용
         return
     
     vector_db = Chroma(persist_directory=DB_PATH, embedding_function=embeddings)
     # config에 정의된 RETRIEVAL_K 상수를 사용해 검색 범위 조절
-    retriever = vector_db.as_retriever(search_kwargs={"k": RETRIEVAL_K})
-    
+    retriever = vector_db.as_retriever(
+        search_type=SEARCH_TYPE, # 유사도만 보지 않고 '다양성'을 고려합니다.
+        search_kwargs={
+            "k": RETRIEVAL_K,
+            "fetch_k": FETCH_K,
+        }
+    )
     # 3. LLM 설정
     llm = OllamaLLM(model=OLLAMA_MODEL)
     
@@ -60,24 +67,43 @@ def ask_second_brain():
         answer=prompt | llm | StrOutputParser()
     )
     
-    print(STATUS_MESSAGES["start_engine"].format(user_name=USER_NAME))
+    # 웹(Gradio)에서 호출한 경우
+    if web_input is not None:
+        try:
+            # invoke 실행 시 터미널 로그를 확인하기 위해 출력문을 추가
+            print(f"🔍 질문 수신 완료: {web_input}")
+            result = chain.invoke(web_input)
+            print(f"✅ 답변 생성 완료: {result['answer']}")
+            # app.py에서 기대하는 (답변, 출처문서) 튜플 형태로 반환합니다.
+            return result['answer'], result['source_documents']
+        except Exception as e:
+            return STATUS_MESSAGES["error_occurred"].format(e=e), []
     
+    print(STATUS_MESSAGES["start_engine"].format(user_name=USER_NAME))
+
+    # 터미널에서 직접 실행한 경우 (기존 루프 유지)
     while True:
-        user_input = input(STATUS_MESSAGES["user_prompt"])
-        if not user_input or user_input.lower() in ['exit', 'quit', 'q']:
+        terminal_input = input(STATUS_MESSAGES["user_prompt"])
+        if not terminal_input or terminal_input.lower() in ['exit', 'quit', 'q']:
             break
         
         # 애니메이션 시작! (task_type="search")
         stop_event, anim = start_animation("search")
         
         try:
-            # 2026년 방식인 invoke를 사용합니다.            
-            result = chain.invoke(user_input)
+            # AI 추론 실행: 2026년 방식인 invoke를 사용합니다.            
+            result = chain.invoke(terminal_input)
             
             # 답변이 완료되면 애니메이션 중지
             stop_event.set()
             anim.join()
             
+            # 1. 딕셔너리 전체 구조 확인 (디버깅용)
+            print(f"DEBUG: {result}")
+            
+            # 2. 강제로 답변 데이터만 출력해보기
+            print(f"\n[직접 출력] {result['answer']}")
+
             # 답변 출력
             print(STATUS_MESSAGES["bot_answer"].format(answer=result['answer'])) # result가 {'source_documents': [...], 'answer': '...'} 형태의 딕셔너리로 반환됨
             
