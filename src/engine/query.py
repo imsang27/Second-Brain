@@ -10,6 +10,13 @@ from src.config import (
     FETCH_K,
     STATUS_MESSAGES,
     USER_NAME,
+    LLM_STREAMING,
+    LLM_TEMPERATURE,
+    LLM_MAX_TOKENS,
+    LLM_TOP_P,
+    LLM_FREQUENCY_PENALTY,
+    LLM_PRESENCE_PENALTY,
+    LLM_STOP,
 )
 
 # ========================================================================
@@ -54,7 +61,16 @@ def ask_second_brain(web_input=None): # web_input 인자 추가
         }
     )
     # 3. LLM 설정
-    llm = OllamaLLM(model=OLLAMA_MODEL)
+    llm = OllamaLLM(
+        model=OLLAMA_MODEL,
+        streaming=LLM_STREAMING,         # 스트리밍 모드 활성화
+        temperature=LLM_TEMPERATURE,        # 답변의 창의성 조절 (필요시)
+        max_tokens=LLM_MAX_TOKENS,        # 최대 토큰 수
+        top_p=LLM_TOP_P,              # 토큰 선택 확률
+        frequency_penalty=LLM_FREQUENCY_PENALTY,  # 단어 빈도 제한
+        presence_penalty=LLM_PRESENCE_PENALTY,   # 단어 존재 제한
+        stop=LLM_STOP,              # 중단 조건
+    )
     
     # 4. 프롬프트 디자인: AI에게 페르소나 부여, RAG 시스템 조립 (질문 -> DB 검색 -> 답변)
     prompt = ChatPromptTemplate.from_template(RAG_PROMPT_TEMPLATE).partial(user_name=USER_NAME)
@@ -72,12 +88,29 @@ def ask_second_brain(web_input=None): # web_input 인자 추가
         try:
             # invoke 실행 시 터미널 로그를 확인하기 위해 출력문을 추가
             print(f"🔍 질문 수신 완료: {web_input}")
-            result = chain.invoke(web_input)
-            print(f"✅ 답변 생성 완료: {result['answer']}")
-            # app.py에서 기대하는 (답변, 출처문서) 튜플 형태로 반환합니다.
-            return result['answer'], result['source_documents']
+            # stream 메서드를 사용하여 답변 조각들을 생성
+            full_answer = ""
+            source_docs = []
+
+            # 1. 먼저 출처(Source)를 확보합니다. (Parallel 구조 활용)
+            # 스트리밍 시에도 출처를 먼저 보여주거나 나중에 붙일 수 있음
+            for chunk in chain.stream(web_input):
+                # 1. 출처 정보 업데이트
+                if 'source_documents' in chunk: # 출처 문서 정보가 먼저 들어오는 경우가 많으므로 이를 우선 체크
+                    source_docs = chunk['source_documents'] # 출처 문서 정보 저장
+                
+                # 2. chunk가 answer 조각인 경우 yield
+                if 'answer' in chunk: # 출처가 이미 확보되었다면 함께 보내고
+                    full_answer += chunk['answer']
+                    # 아니면 빈 출처 리스트를 보냄
+                    yield full_answer, source_docs
+
+            print(f"✅ 답변 생성 완료: {full_answer[:100]}...")
+            return # Generator는 루프가 끝나면 종료
+
         except Exception as e:
-            return STATUS_MESSAGES["error_occurred"].format(e=e), []
+            # return 대신 yield를 사용해 에러 메시지를 전달
+            yield STATUS_MESSAGES["error_occurred"].format(e=e), []
     
     print(STATUS_MESSAGES["start_engine"].format(user_name=USER_NAME))
 

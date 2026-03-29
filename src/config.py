@@ -20,6 +20,16 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
 HASH_ALGORITHM = "sha512"
 
+# LLM 세부 설정
+LLM_STREAMING = os.getenv("LLM_STREAMING", "true").lower() == "true"
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", 0.7))
+LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", 4096))
+LLM_TOP_P = float(os.getenv("LLM_TOP_P", 1.0))
+LLM_FREQUENCY_PENALTY = float(os.getenv("LLM_FREQUENCY_PENALTY", 0.0))
+LLM_PRESENCE_PENALTY = float(os.getenv("LLM_PRESENCE_PENALTY", 0.0))
+_stop = os.getenv("LLM_STOP", None)
+LLM_STOP = None if _stop in [None, "", "None", "none"] else _stop # 문자열 "None"이거나 빈 값인 경우 실제 None 객체로 변환합니다.
+
 # 3. 데이터 및 경로 설정
 NOTES_PATH = os.getenv("NOTES_PATH")
 DB_PATH = os.getenv("DB_PATH", "./chroma_db")
@@ -44,6 +54,7 @@ RAG_PROMPT_TEMPLATE = """당신은 {user_name}님의 '두 번째 두뇌'예요.
     {question}
     
     답변:"""
+
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 500))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 50))
 

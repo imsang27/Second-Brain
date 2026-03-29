@@ -20,67 +20,102 @@ def start_learning():
 def chat_with_brain(message, history):
     # 메시지가 비어있는 경우 방어
     if not message.strip():
-        return "", history
-    
+        yield "", history
+        return
+
     # DB 존재 여부 체크
     if not os.path.exists(DB_PATH):
         response = STATUS_MESSAGES["db_not_found"].format(user_name=USER_NAME)
         # Gradio 6.x 형식으로 추가
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": response})
-        return "", history
+        yield "", history
+        return
 
+    # 초기 상태 추가 (사용자 메시지 먼저 표시)
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": "..."}) # 로딩 표시
+    yield "", history
+    
     try:
-        # query.py의 로직을 통해 AI 답변과 참고 문헌 리스트를 가져옵니다.
-        # (ask_second_brain이 answer와 source_docs를 반환하도록 구성됨)
-        answer, source_docs = ask_second_brain(message) 
-        
-        # 참고 기록(Source Header) 및 목록 구성
-        source_text = STATUS_MESSAGES["source_header"]
-        seen_sources = set() # 이미 표시한 파일명을 저장
-        idx = 1
-
-        for doc in source_docs:
-            title = doc.metadata.get('title', '제목 없음')
-            # 동일 파일 중복 표시 방지
-            if title in seen_sources:
-                continue
+        # ask_second_brain의 yield 결과(answer 조각들)를 실시간 반영
+        for current_answer, source_docs in ask_second_brain(message):
+            # 출처 텍스트 구성 (중복 제거 포함)
+            source_text = "\n\n" + STATUS_MESSAGES["source_header"]
+            seen = set()
+            idx = 1
+            for doc in source_docs:
+                title = doc.metadata.get('title', '제목 없음')
+                if title not in seen:
+                    # config의 source_item 형식을 활용해 깔끔하게 출력
+                    source_text += STATUS_MESSAGES["source_item"].format(
+                        idx=idx,
+                        title=doc.metadata.get('title', '제목 없음'),
+                        date=doc.metadata.get('date', '날짜 미상'),
+                        tags=doc.metadata.get('tags', '없음')
+                    )
+                    seen.add(title)
+                    idx += 1
             
-            date = doc.metadata.get('date', '날짜 미상')
-            tags = doc.metadata.get('tags', '없음')
+            # 마지막 메시지 업데이트
+            history[-1]["content"] = current_answer + (source_text if source_docs else "")
+            yield "", history # 실시간으로 화면 갱신
             
-            source_text += STATUS_MESSAGES["source_item"].format(
-                idx=idx,
-                title=title,
-                date=date,
-                tags=tags
-            )
-            seen_sources.add(title)
-            idx += 1
-
-        # for i, doc in enumerate(source_docs):
-        #     source_text += STATUS_MESSAGES["source_item"].format(
-        #         idx=i+1,
-        #         title=doc.metadata.get('title', '제목 없음'),
-        #         date=doc.metadata.get('date', '날짜 미상'),
-        #         tags=doc.metadata.get('tags', '태그 없음')
-        #     )
-        
-        # 출처가 하나도 없을 경우 메시지 처리
-        if not seen_sources:
-            source_text = STATUS_MESSAGES["no_source_found"]
-
-        full_response = f"{answer}\n\n{source_text}"
-        # 튜플 대신 딕셔너리 리스트 형식으로 저장합니다.
-        history.append({"role": "user", "content": message})
-        history.append({"role": "assistant", "content": full_response})
-        return "", history
-        
     except Exception as e:
-        error_msg = STATUS_MESSAGES["error_occurred"].format(e=e)
-        history.append({"role": "user", "content": message})
-        history.append({"role": "assistant", "content": error_msg})
-        return "", history
+        history[-1]["content"] = STATUS_MESSAGES["error_occurred"].format(e=e)
+        yield "", history
+
+    # try:
+    #     # query.py의 로직을 통해 AI 답변과 참고 문헌 리스트를 가져옵니다.
+    #     # (ask_second_brain이 answer와 source_docs를 반환하도록 구성됨)
+    #     answer, source_docs = ask_second_brain(message) 
+        
+    #     # 참고 기록(Source Header) 및 목록 구성
+    #     source_text = STATUS_MESSAGES["source_header"]
+    #     seen_sources = set() # 이미 표시한 파일명을 저장
+    #     idx = 1
+
+    #     for doc in source_docs:
+    #         title = doc.metadata.get('title', '제목 없음')
+    #         # 동일 파일 중복 표시 방지
+    #         if title in seen_sources:
+    #             continue
+            
+    #         date = doc.metadata.get('date', '날짜 미상')
+    #         tags = doc.metadata.get('tags', '없음')
+            
+    #         source_text += STATUS_MESSAGES["source_item"].format(
+    #             idx=idx,
+    #             title=title,
+    #             date=date,
+    #             tags=tags
+    #         )
+    #         seen_sources.add(title)
+    #         idx += 1
+
+    #     # for i, doc in enumerate(source_docs):
+    #     #     source_text += STATUS_MESSAGES["source_item"].format(
+    #     #         idx=i+1,
+    #     #         title=doc.metadata.get('title', '제목 없음'),
+    #     #         date=doc.metadata.get('date', '날짜 미상'),
+    #     #         tags=doc.metadata.get('tags', '태그 없음')
+    #     #     )
+        
+    #     # 출처가 하나도 없을 경우 메시지 처리
+    #     if not seen_sources:
+    #         source_text = STATUS_MESSAGES["no_source_found"]
+
+    #     full_response = f"{answer}\n\n{source_text}"
+    #     # 튜플 대신 딕셔너리 리스트 형식으로 저장합니다.
+    #     history.append({"role": "user", "content": message})
+    #     history.append({"role": "assistant", "content": full_response})
+    #     return "", history
+        
+    # except Exception as e:
+    #     error_msg = STATUS_MESSAGES["error_occurred"].format(e=e)
+    #     history.append({"role": "user", "content": message})
+    #     history.append({"role": "assistant", "content": error_msg})
+    #     return "", history
 
 # 3. Gradio 인터페이스 구성
 custom_css = """
