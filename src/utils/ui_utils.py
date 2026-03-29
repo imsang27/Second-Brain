@@ -1,7 +1,7 @@
 import sys
 import time
 import threading
-from src.config import STATUS_MESSAGES, USER_NAME, NOTES_PATH, CHUNK_SIZE
+from src.config import STATUS_MESSAGES, USER_NAME, NOTES_PATH
 
 def loading_animation(stop_event, task_type, device_status=""):
     """
